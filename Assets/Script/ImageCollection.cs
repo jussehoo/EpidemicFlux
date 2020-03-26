@@ -7,5 +7,6 @@ public class ImageCollection : MonoBehaviour
 	public Sprite
 		iconPlay,
 		iconPause,
-		iconReset;
+		iconReset,
+		iconClose;
 }
