@@ -81,13 +81,14 @@ public class Unit
 	internal void SetState(State s)
 	{
 		state = s;
-		
+		stateTime = 0f;
+
 		switch(state)
 		{
 		case State.NEUTRAL: break;
 		case State.INFECTED:
 			
-			stateTime = 1f;
+			stateTime = EF.cfg.infectionTime;
 			break;
 
 		case State.SICK:
@@ -97,7 +98,7 @@ public class Unit
 			foreach(var n in links)
 			{
 				if (n == null) continue;
-				if (UnityEngine.Random.Range(0f,1f) > .4f)
+				if (UnityEngine.Random.Range(0f,1f) > 1f - EF.cfg.infectionOnContact)
 				{
 					if (n.state == State.NEUTRAL)
 					{
@@ -105,7 +106,7 @@ public class Unit
 					}
 				}
 			}
-			stateTime = 2f;
+			stateTime = EF.cfg.sickTime;
 			break;
 		case State.IMMUNE:
 			// TODO: immune could infect others too
@@ -121,20 +122,18 @@ public class Unit
 		{
 		case State.NEUTRAL: break;
 		case State.INFECTED:
-			stateTime -= time;
 			if (stateTime <= 0)
 			{
-				if (UnityEngine.Random.Range(0f,1f) > .95f)
+				if (UnityEngine.Random.Range(0f,1f) > 1f - EF.cfg.immunityRate)
 					SetState(State.IMMUNE);
 				else
 					SetState(State.SICK);
 			}
 			break;
 		case State.SICK:
-			stateTime -= time;
 			if (stateTime <= 0)
 			{
-				if (UnityEngine.Random.Range(0f,1f) > .98f)
+				if (UnityEngine.Random.Range(0f,1f) > 1f - EF.cfg.deathRate)
 					SetState(State.DEAD);
 				else
 					SetState(State.RECOVERED);
@@ -143,6 +142,16 @@ public class Unit
 		case State.RECOVERED: break;
 		case State.DEAD: break;
 		}
+
+		// decrease time here so that state doesn't change too early
+		stateTime -= time;
 	}
 
+	internal int linkCount()
+	{
+		int n=0;
+		foreach(var l in links)
+			if (l != null) n++;
+		return n;
+	}
 }

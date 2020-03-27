@@ -6,14 +6,17 @@ using UnityEngine;
 public class Population
 {
 	public Unit [,] pop;
+	private SceneConfig cfg;
 
-	public int
-		width = 201,
-		height = 101;
-	
+	public Population(SceneConfig c)
+	{
+		cfg = c;
+		Create(cfg);
+	}
+		
 	public bool Contains(Int2 p)
 	{
-		return p.x >= 0 && p.y >= 0 && p.x < width && p.y < height;
+		return p.x >= 0 && p.y >= 0 && p.x < cfg.width && p.y < cfg.height;
 	}
 
 	public MList<Int2> Neighbors(Int2 p)
@@ -39,21 +42,21 @@ public class Population
 		return pop[p.x,p.y];
 	}
 
-	public void Create()
+	public void Create(SceneConfig cfg)
 	{
-		pop = new Unit[width,height];
+		pop = new Unit[cfg.width,cfg.height];
 
 		// create units
 
 		int? radius = null; //width / 2;
 
-		for (int x=0; x<width; x++)
+		for (int x=0; x<cfg.width; x++)
 		{
-			for (int y=0; y<height; y++)
+			for (int y=0; y<cfg.height; y++)
 			{
 				if (radius != null)
 				{
-					if (Int2.manhattan(x, y, width / 2, height / 2) > radius) continue;
+					if (Int2.manhattan(x, y, cfg.width / 2, cfg.height / 2) > radius) continue;
 				}
 
 				var unit = new Unit(
@@ -72,9 +75,9 @@ public class Population
 
 		// create links to neighbors
 		
-		for (int x=0; x<width; x++)
+		for (int x=0; x<cfg.width; x++)
 		{
-			for (int y=0; y<height; y++)
+			for (int y=0; y<cfg.height; y++)
 			{
 				var pos = new Int2(x,y);
 				var p = UnitAt(pos);
@@ -96,16 +99,47 @@ public class Population
 
 		// randomly remove units
 
-		var firstUnit = pop[width/2,height/2];
-
-		for (int i=0; i< width * height / 4; i++)
+		var firstUnit = pop[cfg.width/2,cfg.height/2];
+		
+		for (int x=0; x<cfg.width; x++)
 		{
-			var removable = pop[UnityEngine.Random.Range(0,width),UnityEngine.Random.Range(0,height)];
-			if (removable == firstUnit) continue;
-			RemoveUnit(removable);
+			for (int y=0; y<cfg.height; y++)
+			{
+				if (UnityEngine.Random.Range(0f,1f) < cfg.density) continue;
+
+				bool dontRemove = false;
+				
+				// don't remove if there's a neighbor with only one link
+
+				foreach (var neighbor in Neighbors(new Int2(x,y)))
+				{
+					var n = pop[neighbor.x, neighbor.y];
+					if (n == null) continue;
+					if (n.linkCount() <= 1)
+					{
+						dontRemove = true;
+						continue;
+					}
+				}
+				if (dontRemove) continue;
+
+				var removable = pop[x,y];
+				if (removable == firstUnit) continue;
+				RemoveUnit(removable);
+			}
 		}
 
 		firstUnit.SetState(Unit.State.INFECTED);
+	}
+	
+	internal int width()
+	{
+		return cfg.width;
+	}
+
+	internal int height()
+	{
+		return cfg.height;
 	}
 
 	private void RemoveUnit(Unit removable)

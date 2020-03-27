@@ -1,18 +1,94 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SliderCtrl : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+	public Slider slider;
+	public TextMeshProUGUI inputField; // TODO: TMP_InputField
+	public TextMeshProUGUI title, minText, maxText, timeText;
+	public float minValue, maxValue;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+	public delegate void OnSliderValueChanged(float? newValue);
+	public OnSliderValueChanged onValueChanged;
+	private bool timeValue;
+	private float timeScale = -1f;
+	private bool textEditing = false;
+
+	public void Setup(string titleText, float min, float max, float current, bool _timeValue, OnSliderValueChanged _onValueChanged)
+	{
+		Debug.Assert(min <= current && current <= max);
+		minValue = min;
+		maxValue = max;
+		
+		timeValue = _timeValue;
+		onValueChanged = _onValueChanged;
+
+		title.text = titleText;
+		minText.text = min.ToString();
+		maxText.text = max.ToString();
+		inputField.text = current.ToString();
+		timeText.text = "";
+		slider.value = (current - min) / (max - min);
+	}
+
+	private void Update()
+	{
+		if (timeValue && timeScale != EF.cfg.timeScale)
+		{
+			timeScale = EF.cfg.timeScale;
+
+			RefreshTime();
+		}
+	}
+
+	private void RefreshTime()
+	{
+		float simTime = (minValue + ((maxValue-minValue) * slider.value));
+		timeText.text = EF.simTimeToString(simTime);
+	}
+
+	public void ValueChanged()
+	{
+		float newValue = minValue + (slider.value * (maxValue - minValue));
+		if (!textEditing) inputField.text = String.Format("{0:0.00}", newValue);
+		onValueChanged(newValue);
+		if (timeValue) RefreshTime();
+	}
+
+	public void ResetValue()
+	{
+		slider.value = .5f;
+		inputField.text = "-";
+		onValueChanged(null);
+	}
+
+	public void InputTextChanged()
+	{
+		try
+		{
+			// parse
+			float f = float.Parse(inputField.text);
+			// clamp
+			float current = Mathf.Clamp(f, minValue, maxValue);
+			// slider
+			textEditing = true;
+			slider.value = (current - minValue) / (maxValue - minValue);
+			textEditing = false;
+		}
+		catch (Exception) { return; }
+	}
+
+	public void IncreaseValue()
+	{
+		slider.value = (float)Math.Round(slider.value + .01f, 2);
+	}
+
+	public void DecreaseValue()
+	{
+		slider.value = (float)Math.Round(slider.value - .01f, 2);
+	}
 }

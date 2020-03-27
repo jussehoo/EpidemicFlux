@@ -8,5 +8,10 @@ public class ImageCollection : MonoBehaviour
 		iconPlay,
 		iconPause,
 		iconReset,
-		iconClose;
+		iconClose,
+		iconZoomIn,
+		iconZoomOut,
+		iconMenu,
+		iconSpeedUp,
+		iconSpeedDown;
 }
