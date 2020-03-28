@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class EF : MonoBehaviour
 {
+
 	internal static ImageCollection img;
 
 	public static EFCtrl efCtrl;
@@ -22,8 +23,8 @@ public class EF : MonoBehaviour
 		string s = "";
 		int hours = (int)(simTime * EF.cfg.timeScale);
 		int days = hours / 24;
-		if (days > 0) s += "" + days + "d ";
-		s += "" + (hours % 24) + "h";
+		if (days > 0) s += "" + days + "d";
+		if (days < 3) s += " " + (hours % 24) + "h";
 		return s;
 	}
 }

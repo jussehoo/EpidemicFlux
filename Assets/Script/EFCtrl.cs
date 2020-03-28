@@ -7,19 +7,22 @@ public class EFCtrl : MonoBehaviour
 	public Population population;
 	public MenuCtrl menuCtrl;
 	private CameraCtrl camCtrl;
+	private PlayerCtrl playerCtrl;
 	const float DEFAULT_PACE = .1f;
 	float pace = DEFAULT_PACE;
 	private float stepTime, simTime = 0f;
-	const float SIM_STEP = .2f;
-	enum SimState
+	const float SIM_STEP = .06f;
+	
+	public enum SimState
 	{
 		EMPTY,
+		INITIALIZED,
 		RUNNING,
 		PAUSE,
 		FINISHED
 	}
 
-	SimState simState;
+	public SimState simState;
 
     // Start is called before the first frame update
     void Awake()
@@ -27,12 +30,17 @@ public class EFCtrl : MonoBehaviour
 		EF.img = FindObjectOfType<ImageCollection>();
 		menuCtrl = FindObjectOfType<MenuCtrl>();
 		camCtrl = FindObjectOfType<CameraCtrl>();
+		playerCtrl = FindObjectOfType<PlayerCtrl>();
 		simState = SimState.EMPTY;
-
     }
 
-    // Update is called once per frame
-    void Update()
+	private void Start()
+	{
+		Generate();
+	}
+
+	// Update is called once per frame
+	void Update()
     {
         if (population != null && simState == SimState.RUNNING)
 		{
@@ -41,12 +49,21 @@ public class EFCtrl : MonoBehaviour
 			{
 				simTime += SIM_STEP;
 				population.Step(SIM_STEP);
-				camCtrl.DrawAll();
+				if (EndCondition()) simState = SimState.FINISHED;
+				playerCtrl.RefreshStats();
+				camCtrl.drawNext = true;
 				stepTime = pace;
 			}
 		}
     }
 	
+	public bool EndCondition()
+	{
+		return
+			population.unitStateNum[(int)Unit.State.INFECTED] == 0 &&
+			population.unitStateNum[(int)Unit.State.SICK] == 0;
+	}
+
 	public bool isRunning()
 	{
 		return simState == SimState.RUNNING;
@@ -57,22 +74,42 @@ public class EFCtrl : MonoBehaviour
 		return simTime;
 	}
 
-	internal void PlaySim()
+	public void Generate()
 	{
-		if (simState == SimState.EMPTY)
+		population = new Population(EF.cfg);
+		simState = SimState.INITIALIZED;
+		camCtrl.ResetView();
+		playerCtrl.RefreshStats();
+	}
+
+	internal void PlayPauseSim()
+	{
+	
+        if (simState == SimState.RUNNING)
+		{
+			simState = SimState.PAUSE;
+		}
+		else if (simState == SimState.INITIALIZED)
 		{
 			pace = DEFAULT_PACE;
 			stepTime = pace;
 			simTime = 0f;
-
-			population = new Population(EF.cfg);
-			camCtrl.ResetView();
 			simState = SimState.RUNNING;
 		}
 		else if (simState == SimState.PAUSE)
 		{
 			simState = SimState.RUNNING;
 		}
+		playerCtrl.RefreshPlayPauseButton();
+	}
+
+	internal void PauseSim()
+	{
+        if (simState == SimState.RUNNING)
+		{
+			simState = SimState.PAUSE;
+		}
+		playerCtrl.RefreshPlayPauseButton();
 	}
 
 	internal void SpeedUp()
@@ -85,18 +122,9 @@ public class EFCtrl : MonoBehaviour
 		pace *= 1.33f;
 	}
 
-	internal void PauseSim()
-	{
-        if (simState == SimState.RUNNING)
-		{
-			simState = SimState.PAUSE;
-		}
-	}
-
 	internal void RestartSim()
 	{
-		population = null;
-		simState = SimState.EMPTY;
+		Generate();
 	}
 
 	internal void CloseConfigMenu()

@@ -4,6 +4,14 @@ using UnityEngine;
 
 public class ImageCollection : MonoBehaviour
 {
+	public Material 
+		unitNeutral		,
+		unitInfected	,
+		unitSick		,
+		unitImmune		,
+		unitRecovered	,
+		unitDead		,
+		bgColor			;
 	public Sprite
 		iconPlay,
 		iconPause,

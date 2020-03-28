@@ -25,48 +25,46 @@ public class MenuCtrl : MonoBehaviour
     void Start()
     {
         createTitle("Scene configuration");
-
-		//	public void Setup(string titleText, float min, float max, float current, OnSliderValueChanged _onValueChanged)
-		
+				
 		createSlider(
-			"Density", 0f, 1f, EF.cfg.density, false,
+			"Density", 0f, 1f, EF.cfg.density, SliderCtrl.Type.PERCENTAGE,
 			(f) => { if (f != null) EF.cfg.density = f.Value; });
 
 		createSlider(
-			"Infection on contact", 0f, 1f, EF.cfg.infectionOnContact, false,
+			"Infectivity", 0f, 1f, EF.cfg.infectionOnContact, SliderCtrl.Type.PERCENTAGE,
 			(f) => { if (f != null) EF.cfg.infectionOnContact = f.Value; });
 
 		createSlider(
-			"Infection time", 0.01f, 1f, EF.cfg.infectionTime, true,
+			"Infection time", 0.01f, 1f, EF.cfg.infectionTime, SliderCtrl.Type.TIME,
 			(f) => { if (f != null) EF.cfg.infectionTime = f.Value; });
 
 		createSlider(
-			"Sickness time", 0.01f, 1f, EF.cfg.sickTime, true,
+			"Duration of illness", 0.01f, 1f, EF.cfg.sickTime, SliderCtrl.Type.TIME,
 			(f) => { if (f != null) EF.cfg.sickTime = f.Value; });
 
 		createSlider(
-			"Immunity rate", 0f, 1f, EF.cfg.immunityRate, false,
+			"Immunity rate", 0f, 1f, EF.cfg.immunityRate, SliderCtrl.Type.PERCENTAGE,
 			(f) => { if (f != null) EF.cfg.immunityRate = f.Value; });
 
 		createSlider(
-			"Death rate", 0f, 1f, EF.cfg.deathRate, false,
+			"Death rate", 0f, 1f, EF.cfg.deathRate, SliderCtrl.Type.PERCENTAGE,
 			(f) => { if (f != null) EF.cfg.deathRate = f.Value; });
 
 			
         createTitle("");
 		
 		createSlider(
-			"Time scale", 0f, 90 * 24f, EF.cfg.timeScale, false,
+			"Time scale", 0f, 90 * 24f, EF.cfg.timeScale, SliderCtrl.Type.DEFAULT,
 			(f) => { if (f != null) EF.cfg.timeScale = f.Value; });
 
 			
 		createButton(EF.img.iconClose, "", () => { EF.efCtrl.CloseConfigMenu(); });
     }
 
-	private void createSlider(string titleText, float min, float max, float current, bool timeValue, OnSliderValueChanged _onValueChanged)
+	private void createSlider(string titleText, float min, float max, float current, SliderCtrl.Type type, OnSliderValueChanged _onValueChanged)
 	{
 		var slider = Instantiate(sliderTmp);
-		slider.Setup(titleText, min, max, current, timeValue, _onValueChanged);
+		slider.Setup(titleText, min, max, current, type, _onValueChanged);
 		addMenuObject(slider.gameObject);
 	}
 

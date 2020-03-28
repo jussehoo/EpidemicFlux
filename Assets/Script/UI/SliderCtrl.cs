@@ -14,30 +14,46 @@ public class SliderCtrl : MonoBehaviour
 
 	public delegate void OnSliderValueChanged(float? newValue);
 	public OnSliderValueChanged onValueChanged;
-	private bool timeValue;
 	private float timeScale = -1f;
 	private bool textEditing = false;
+	Type type;
 
-	public void Setup(string titleText, float min, float max, float current, bool _timeValue, OnSliderValueChanged _onValueChanged)
+	public enum Type
+	{
+	DEFAULT,
+	TIME,
+	PERCENTAGE
+	}
+
+	public void Setup(string titleText, float min, float max, float current, Type _type, OnSliderValueChanged _onValueChanged)
 	{
 		Debug.Assert(min <= current && current <= max);
 		minValue = min;
 		maxValue = max;
 		
-		timeValue = _timeValue;
+		type = _type;
 		onValueChanged = _onValueChanged;
 
 		title.text = titleText;
-		minText.text = min.ToString();
-		maxText.text = max.ToString();
+		minText.text = numToString(min);
+		maxText.text = numToString(max);
 		inputField.text = current.ToString();
 		timeText.text = "";
 		slider.value = (current - min) / (max - min);
 	}
 
+	private string numToString(float f)
+	{
+		if (type == Type.PERCENTAGE)
+		{
+			return "" + ((int)(100 * f)) + "%";
+		}
+		else return String.Format("{0:0.00}", f);
+	}
+
 	private void Update()
 	{
-		if (timeValue && timeScale != EF.cfg.timeScale)
+		if (type == Type.TIME && timeScale != EF.cfg.timeScale)
 		{
 			timeScale = EF.cfg.timeScale;
 
@@ -54,9 +70,9 @@ public class SliderCtrl : MonoBehaviour
 	public void ValueChanged()
 	{
 		float newValue = minValue + (slider.value * (maxValue - minValue));
-		if (!textEditing) inputField.text = String.Format("{0:0.00}", newValue);
+		if (!textEditing) inputField.text = numToString(newValue);
 		onValueChanged(newValue);
-		if (timeValue) RefreshTime();
+		if (type == Type.TIME) RefreshTime();
 	}
 
 	public void ResetValue()

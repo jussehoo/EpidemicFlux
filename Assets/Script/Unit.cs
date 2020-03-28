@@ -21,7 +21,7 @@ public class Unit
 	public Vector3 worldPosition;
 	private Unit [] links = null;
 
-	private State state;
+	public State state;
 	private float stateTime;
 
 
@@ -64,18 +64,18 @@ public class Unit
 		}
 	}
 
-	internal Color color()
+	internal Material color()
 	{
 		switch(state)
 		{
-		case State.NEUTRAL: return Color.gray;
-		case State.INFECTED: return Color.yellow;
-		case State.SICK: return Color.red;
-		case State.IMMUNE: return Color.blue;
-		case State.RECOVERED: return Color.cyan;
-		case State.DEAD: return Color.black;
+		//case State.NEUTRAL: return EF.img.unitNeutral;
+		case State.INFECTED: return EF.img.unitInfected;
+		case State.SICK: return EF.img.unitSick;
+		case State.IMMUNE: return EF.img.unitImmune;
+		case State.RECOVERED: return EF.img.unitRecovered;
+		case State.DEAD: return EF.img.unitDead;
 		}
-		return Color.white;
+		return EF.img.unitNeutral;
 	}
 
 	internal void SetState(State s)
@@ -109,7 +109,8 @@ public class Unit
 			stateTime = EF.cfg.sickTime;
 			break;
 		case State.IMMUNE:
-			// TODO: immune could infect others too
+			// TODO: immune could infect others too.
+			// or isn't the point that it doesn't...
 			break;
 		case State.RECOVERED: break;
 		case State.DEAD: break;

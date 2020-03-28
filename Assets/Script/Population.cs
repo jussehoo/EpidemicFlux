@@ -8,10 +8,14 @@ public class Population
 	public Unit [,] pop;
 	private SceneConfig cfg;
 
+	public int [] unitStateNum;
+
 	public Population(SceneConfig c)
 	{
 		cfg = c;
 		Create(cfg);
+
+		unitStateNum = new int[Enum.GetNames(typeof(Unit.State)).Length];
 	}
 		
 	public bool Contains(Int2 p)
@@ -130,6 +134,12 @@ public class Population
 		}
 
 		firstUnit.SetState(Unit.State.INFECTED);
+		foreach (var neighbor in Neighbors(firstUnit.pos))
+		{
+			var n = pop[neighbor.x, neighbor.y];
+			if (n == null) continue;
+			n.SetState(Unit.State.INFECTED);
+		}
 	}
 	
 	internal int width()
@@ -156,11 +166,15 @@ public class Population
 
 	public void Step(float time)
 	{
+		for (int i=0; i<unitStateNum.Length; i++) unitStateNum[i] = 0;
+
 		foreach(var unit in pop)
 		{
 			if (unit == null) continue;
 
 			unit.Step(time);
+
+			unitStateNum[(int)unit.state]++;
 		}
 	}
 
