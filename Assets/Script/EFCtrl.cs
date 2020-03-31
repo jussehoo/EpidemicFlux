@@ -13,6 +13,8 @@ public class EFCtrl : MonoBehaviour
 	private float stepTime, simTime = 0f;
 	const float SIM_STEP = .06f;
 	
+	public bool skipDrawingOnSteppingFrame = true;
+
 	public enum SimState
 	{
 		EMPTY,
@@ -38,21 +40,48 @@ public class EFCtrl : MonoBehaviour
 	{
 		Generate();
 	}
+	
+	private bool gcNext = false;
 
 	// Update is called once per frame
 	void Update()
     {
+		bool skipStep = false;
+
+		// equalizing workload per frame
+
+		//if (gcNext) // alternative solution but very slow if frame rate is low
+		//{
+		//	System.GC.Collect();
+		//	gcNext = false;
+		//	skipStep = true;
+		//}
+
+		if (skipDrawingOnSteppingFrame && !camCtrl.thisCamera.enabled)
+		{
+			camCtrl.thisCamera.enabled = true;
+			
+			System.GC.Collect();
+
+			gcNext = true;
+			skipStep = true;
+		}
+
+		if (!skipDrawingOnSteppingFrame) System.GC.Collect();
+
         if (population != null && simState == SimState.RUNNING)
 		{
 			stepTime -= Time.deltaTime;
-			if (stepTime < 0f)
+			if (!skipStep && stepTime < 0f)
 			{
 				simTime += SIM_STEP;
 				population.Step(SIM_STEP);
 				if (EndCondition()) simState = SimState.FINISHED;
 				playerCtrl.RefreshStats();
-				camCtrl.drawNext = true;
-				stepTime = pace;
+				
+				if (skipDrawingOnSteppingFrame) camCtrl.thisCamera.enabled = false;
+
+				stepTime = pace + stepTime; // add overflow from previous time limit
 			}
 		}
     }
@@ -125,6 +154,7 @@ public class EFCtrl : MonoBehaviour
 	internal void RestartSim()
 	{
 		Generate();
+		playerCtrl.RefreshPlayPauseButton();
 	}
 
 	internal void CloseConfigMenu()
@@ -134,6 +164,6 @@ public class EFCtrl : MonoBehaviour
 
 	internal void OpenConfigMenu()
 	{
-		menuCtrl.Show();
+		menuCtrl.ShowConfig();
 	}
 }

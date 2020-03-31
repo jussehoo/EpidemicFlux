@@ -93,7 +93,18 @@ public class Unit
 
 		case State.SICK:
 			
-			// potential infection
+			// random infection
+
+			if (UnityEngine.Random.Range(0f,1f) < EF.cfg.randomInfection)
+			{
+				Unit u = EF.efCtrl.population.GetRandomUnit();
+				if (u != null && u.state == State.NEUTRAL)
+				{
+					u.SetState(State.INFECTED);
+				}
+			}
+
+			// neighbor infection
 
 			foreach(var n in links)
 			{

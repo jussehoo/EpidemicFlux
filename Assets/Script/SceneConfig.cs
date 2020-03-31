@@ -10,10 +10,11 @@ public class SceneConfig
 
 	public float
 		density = .75f,
-		infectionOnContact = .65f,
+		infectionOnContact = .8f,
+		randomInfection = .0f,
 		infectionTime = .1f,
 		sickTime = .7f,
-		immunityRate = .05f,
+		immunityRate = .15f,
 		deathRate = .01f,
 		
 		timeScale = 480f;

@@ -21,5 +21,11 @@ public class ImageCollection : MonoBehaviour
 		iconZoomOut,
 		iconMenu,
 		iconSpeedUp,
-		iconSpeedDown;
+		iconSpeedDown,
+		iconTime,
+		iconInfo,
+		iconScenarios,
+		iconBasic,
+		iconAviators,
+		iconCity;
 }

@@ -10,9 +10,8 @@ public class CameraCtrl : MonoBehaviour
 	public Material lineMaterial;
 	public Sprite img;
 	private static Mesh quadMesh;
-	internal bool drawNext = false;
 	public Material spriteMaterial1, spriteMaterial2;
-	private Camera thisCamera;
+	public Camera thisCamera;
 	private static Color bgc;
 	private const float MAX_SIZE = 110;
 	private const float INIT_SIZE = MAX_SIZE;
@@ -70,11 +69,7 @@ public class CameraCtrl : MonoBehaviour
 
 	void Update()
 	{
-		//if (drawNext)
-		{
-			DrawAll();
-			drawNext = false;
-		}
+		DrawAll();
 	}
 
 	public void ResetView()

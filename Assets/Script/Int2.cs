@@ -48,7 +48,19 @@ public struct Int2
 	public static int chessboardDistance(int ax, int ay, int bx, int by){return Math.Max(Math.Abs(ax - bx), Math.Abs(ay - by));}
 	public void toChessBoardUnit(){x = sign(x);y = sign(y);}
 
-
+	public static int hexDistance(int aX1, int aY1, int aX2, int aY2)
+	 {
+		 int dx = aX2 - aX1;     // signed deltas
+		 int dy = aY2 - aY1;
+		 int x = Math.Abs(dx);  // absolute deltas
+		 int y = Math.Abs(dy);
+		 // special case if we start on an odd row or if we move into negative x direction
+		 if ((dx < 0)^((aY1&1)==1))
+			 x = Math.Max(0, x - (y + 1) / 2);
+		 else
+			 x = Math.Max(0, x - (y) / 2);
+		 return x + y;
+	 }
 	/* hex directions (y increases down)
 	 * HEX6:
 	 *

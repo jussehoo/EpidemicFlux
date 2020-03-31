@@ -46,7 +46,9 @@ public class SliderCtrl : MonoBehaviour
 	{
 		if (type == Type.PERCENTAGE)
 		{
-			return "" + ((int)(100 * f)) + "%";
+			f *= 100f;
+			if (f>=10f) return "" + ((int)f) + "%";
+			return String.Format("{0:0.00}", f) + "%";
 		}
 		else return String.Format("{0:0.00}", f);
 	}

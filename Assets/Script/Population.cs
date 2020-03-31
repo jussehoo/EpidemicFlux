@@ -52,30 +52,16 @@ public class Population
 
 		// create units
 
-		int? radius = null; //width / 2;
+		
+		FillArea (cfg.width / 2, cfg.height / 2, cfg.width / 4);
+		FillArea (cfg.width / 6, cfg.height / 2, cfg.width / 7);
+		FillArea (5 * cfg.width / 6, cfg.height / 2, cfg.width / 7);
+		
+		FillArea (8 * cfg.width / 9, cfg.height / 6, cfg.width / 9);
+		FillArea (8 * cfg.width / 9, 5*cfg.height / 6, cfg.width / 9);
+		FillArea (1 * cfg.width / 9, 5*cfg.height / 6, cfg.width / 9);
+		FillArea (1 * cfg.width / 9, cfg.height / 6, cfg.width / 9);
 
-		for (int x=0; x<cfg.width; x++)
-		{
-			for (int y=0; y<cfg.height; y++)
-			{
-				if (radius != null)
-				{
-					if (Int2.manhattan(x, y, cfg.width / 2, cfg.height / 2) > radius) continue;
-				}
-
-				var unit = new Unit(
-					x,
-					y,
-					new Vector3
-					(
-						x * EF.unitDistance,
-						y * EF.unitDistance + (x%2==1?.5f*EF.unitDistance:0f),
-						0
-					));
-				unit.InitUnit();
-				unit.pos = new Int2(x,y);
-				pop[x,y] = unit;
-		}}
 
 		// create links to neighbors
 		
@@ -134,14 +120,54 @@ public class Population
 		}
 
 		firstUnit.SetState(Unit.State.INFECTED);
-		foreach (var neighbor in Neighbors(firstUnit.pos))
+		foreach (var n1 in Neighbors(firstUnit.pos))
+		foreach (var n2 in Neighbors(n1))
 		{
-			var n = pop[neighbor.x, neighbor.y];
-			if (n == null) continue;
-			n.SetState(Unit.State.INFECTED);
+			foreach (var neighbor in Neighbors(n2))
+			{
+				var n = pop[neighbor.x, neighbor.y];
+				if (n == null) continue;
+				if (n.state == Unit.State.NEUTRAL) n.SetState(Unit.State.INFECTED);
+			}
 		}
 	}
-	
+
+	internal Unit GetRandomUnit()
+	{
+		for (int i=0; i<1000; i++)
+		{
+			Unit u =pop[UnityEngine.Random.Range(0, cfg.width-1),UnityEngine.Random.Range(0, cfg.height-1)];
+			if (u != null) return u;
+		}
+		return null;
+	}
+
+	private void FillArea(int cx, int cy, int? radius)
+	{
+		for (int x=0; x<cfg.width; x++)
+		{
+			for (int y=0; y<cfg.height; y++)
+			{
+				if (radius != null)
+				{
+					if (Int2.hexDistance(x, y, cx,cy) > radius) continue;
+				}
+
+				var unit = new Unit(
+					x,
+					y,
+					new Vector3
+					(
+						x * EF.unitDistance,
+						y * EF.unitDistance + (x%2==1?.5f*EF.unitDistance:0f),
+						0
+					));
+				unit.InitUnit();
+				unit.pos = new Int2(x,y);
+				pop[x,y] = unit;
+		}}
+	}
+
 	internal int width()
 	{
 		return cfg.width;

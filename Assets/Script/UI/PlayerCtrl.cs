@@ -37,25 +37,25 @@ public class PlayerCtrl : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        playPauseButton = createButton(EF.img.iconPlay, "Play", () => efCtrl.PlayPauseSim() );
-        //createButton(EF.img.iconPause, "Pause", () => efCtrl.PauseSim() );
-        createButton(EF.img.iconReset, "Reset", () => efCtrl.RestartSim() );
-        //createButton(EF.img.iconZoomIn, "Zoom in", () => camCtrl.ZoomIn() );
-        //createButton(EF.img.iconZoomOut, "Zoom out", () => camCtrl.ZoomOut() );
-		createButton(EF.img.iconSpeedUp, "Faster", () => efCtrl.SpeedUp() );
-        createButton(EF.img.iconSpeedDown, "Slower", () => efCtrl.SpeedDown() );
-        createButton(EF.img.iconMenu, "Config.", () => { efCtrl.PauseSim(); menuCtrl.Show(); } );
+        playPauseButton = CreateButton(EF.img.iconPlay, "Play", () => efCtrl.PlayPauseSim() );
+        CreateButton(EF.img.iconReset, "Reset", () => efCtrl.RestartSim() );
+		CreateButton(EF.img.iconSpeedUp, "Faster", () => efCtrl.SpeedUp() );
+        CreateButton(EF.img.iconSpeedDown, "Slower", () => efCtrl.SpeedDown() );
+        CreateButton(EF.img.iconMenu, "Config.", () => { efCtrl.PauseSim(); menuCtrl.ShowConfig(); } );
+        CreateButton(EF.img.iconScenarios, "Presets", () => { efCtrl.PauseSim(); menuCtrl.ShowPresets(); } );
+        CreateButton(EF.img.iconInfo, "Info", () => { ; } );
 
 		RefreshPlayPauseButton();
 		
-		statTime		= createStat("Time");
-		statNeutral		= createStat("Neutral");
-		statInfected	= createStat("Infected");
-		statSick		= createStat("Sick");
-		statImmune		= createStat("Immune");
-		statRecovered	= createStat("Recovered");
-		statDead		= createStat("Dead");
-		statState		= createStat("State");
+		statTime		= CreateStat("Time", null, EF.img.iconTime);
+
+		statNeutral		= CreateStat("Neutral",		EF.img.unitNeutral.color);
+		statInfected	= CreateStat("Infected",	EF.img.unitInfected.color);
+		statSick		= CreateStat("Sick",		EF.img.unitSick.color);
+		statImmune		= CreateStat("Immune",		EF.img.unitImmune.color);
+		statRecovered	= CreateStat("Recovered",	EF.img.unitRecovered.color);
+		statDead		= CreateStat("Dead",		EF.img.unitDead.color);
+		statState		= CreateStat("State", null);
     }
 
 	internal void RefreshStats()
@@ -70,7 +70,7 @@ public class PlayerCtrl : MonoBehaviour
 		statState		.value.text = efCtrl.simState.ToString();
 	}
 
-	private PlayerButton createButton(Sprite icon, string s, System.Action act)
+	private PlayerButton CreateButton(Sprite icon, string s, System.Action act)
 	{
 		var button = Instantiate(buttonTmp);
 		button.gameObject.SetActive(true);
@@ -81,7 +81,7 @@ public class PlayerCtrl : MonoBehaviour
 		button.act = act;
 		return button;
 	}
-	private StatItem createStat(string s)
+	private StatItem CreateStat(string s, Color? color, Sprite icon = null)
 	{
 		var stat = Instantiate(statTmp);
 		stat.gameObject.SetActive(true);
@@ -89,6 +89,11 @@ public class PlayerCtrl : MonoBehaviour
 		stat.transform.localScale = Vector3.one;
 		stat.title.text = s;
 		stat.value.text = "";
+
+		if (color == null && icon == null) stat.img.gameObject.SetActive(false);
+		if (color != null) stat.img.color = color.Value;
+		if (icon != null) stat.img.sprite = icon;
+
 		return stat;
 	}
 
