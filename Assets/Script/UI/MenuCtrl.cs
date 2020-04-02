@@ -4,6 +4,7 @@ using UnityEngine;
 using TMPro;
 using System;
 using static SliderCtrl;
+using UnityEngine.UI;
 
 public class MenuCtrl : MonoBehaviour
 {
@@ -11,7 +12,7 @@ public class MenuCtrl : MonoBehaviour
 	public TextMeshProUGUI titleTmp, textTmp;
 	public SliderCtrl sliderTmp;
 
-	public GameObject panelTmp;
+	public GameObject panelTmp, infoTmp, backgroundBlocker;
 	private Transform buttonPanel;
 
 	void Awake()
@@ -21,7 +22,8 @@ public class MenuCtrl : MonoBehaviour
 		titleTmp.gameObject.SetActive(false);
 		textTmp.gameObject.SetActive(false);
 		sliderTmp.gameObject.SetActive(false);
-
+		infoTmp.gameObject.SetActive(false);
+		backgroundBlocker.SetActive(false);
 		panelTmp.SetActive(false);
 		//Hide();
 	}
@@ -72,23 +74,55 @@ public class MenuCtrl : MonoBehaviour
 			(f) => { if (f != null) EF.cfg.timeScale = f.Value; });
 
 			
-		CreateIcon(EF.img.iconClose, "", () => { EF.efCtrl.CloseConfigMenu(); });
+		CreateIcon(EF.img.iconClose, "", () => { CloseMenu(); });
 	}
 
 	private void createSlider(string titleText, float min, float max, float current, SliderCtrl.Type type, OnSliderValueChanged _onValueChanged)
 	{
 		var slider = Instantiate(sliderTmp);
 		slider.Setup(titleText, min, max, current, type, _onValueChanged);
-		addMenuObject(slider.gameObject);
+		AddMenuObject(slider.gameObject);
 	}
 
-	internal void Hide()
+	public void BackgroundClicked()
+	{
+		CloseMenu();
+	}
+
+	internal void CloseMenu()
 	{
 		if (buttonPanel != null)
 		{
 			Destroy(buttonPanel.gameObject);
 			buttonPanel = null;
+			
+			backgroundBlocker.SetActive(false);
 		}
+	}
+
+	internal void ShowInfo()
+	{
+		CreatePanel();
+
+		buttonPanel.GetComponent<Image>().color = new Color(.1f,.5f,.1f,.9f);
+
+		CreateTitle("GVIDS info");
+
+		var info = Instantiate(infoTmp);
+		
+		CreateButton(EF.img.iconScenarios, "Load a scenario preset", () => ShowPresets());
+		CreateButton(EF.img.iconMenu, "Adjust simulation configurations", () => ShowConfig());
+		CreateButton(EF.img.iconInfo, "Show this screen", () => {});
+		CreateButton(EF.img.iconPlay, "Run simulation", () => {CloseMenu(); EF.efCtrl.PlayPauseSim(); });
+		
+		AddMenuObject(info);
+		
+		CreateText(
+			"Infection flow: (a) Units get infected by a neighbor or other sick unit according to certain odds [Neighbor/random infectivity]. (b) For immune units, it stops here [Immunity rate]," +
+			"(c) others get sick. (d, e) Death rate determines how many units recovers.");
+
+		CreateIcon(EF.img.iconClose, "", () => { CloseMenu(); });
+		
 	}
 	
 	internal void ShowConfig()
@@ -106,7 +140,7 @@ public class MenuCtrl : MonoBehaviour
 		CreateButton(EF.img.iconBasic, "Basic", () => {
 			EF.cfg = new SceneConfig();
 			EF.efCtrl.Generate();
-			Hide();
+			CloseMenu();
 		});
 		CreateText("Basic settings.");
 
@@ -116,7 +150,7 @@ public class MenuCtrl : MonoBehaviour
 			EF.cfg.randomInfection = .08f;
 			EF.cfg.infectionOnContact = .65f;
 			EF.efCtrl.Generate();
-			Hide();
+			CloseMenu();
 		});
 		CreateText("Aviating causes more random infections in distant places. Neighbor infections are not so common here.");
 
@@ -127,17 +161,21 @@ public class MenuCtrl : MonoBehaviour
 			EF.cfg.infectionOnContact = .65f;
 			EF.cfg.immunityRate = .20f;
 			EF.efCtrl.Generate();
-			Hide();
+			CloseMenu();
 		});
 		CreateText("Less distant infections. Dense population.");
 
-		CreateIcon(EF.img.iconClose, "", () => { EF.efCtrl.CloseConfigMenu(); });
+		CreateIcon(EF.img.iconClose, "", () => { CloseMenu(); });
 	}
 
 	private void CreatePanel()
 	{
-		Hide();
+		CloseMenu();
 		
+		EF.efCtrl.PauseSim();
+
+		backgroundBlocker.SetActive(true);
+
 		var bp = Instantiate(panelTmp);
 		bp.SetActive(true);
 
@@ -153,7 +191,7 @@ public class MenuCtrl : MonoBehaviour
 		button.icon.sprite = icon;
 		button.text.text = s;
 		button.act = act;
-		addMenuObject(button.gameObject);
+		AddMenuObject(button.gameObject);
 	}
 
 	private void CreateButton(Sprite icon, string s, System.Action act)
@@ -162,32 +200,25 @@ public class MenuCtrl : MonoBehaviour
 		button.icon.sprite = icon;
 		button.text.text = s;
 		button.act = act;
-		addMenuObject(button.gameObject);
+		AddMenuObject(button.gameObject);
 	}
 	
 	private void CreateTitle(string s)
 	{
 		var title = Instantiate(titleTmp);
 		title.text = s;
-		addMenuObject(title.gameObject);
+		AddMenuObject(title.gameObject);
 	}
 	private void CreateText(string s)
 	{
 		var txt = Instantiate(textTmp);
 		txt.text = s;
-		addMenuObject(txt.gameObject);
+		AddMenuObject(txt.gameObject);
 	}
 
-	private void addMenuObject(GameObject go)
+	private void AddMenuObject(GameObject go)
 	{
 		go.gameObject.SetActive(true);
 		go.transform.SetParent(buttonPanel);
 	}
-
-	// Update is called once per frame
-	void Update()
-    {
-        
-    }
-
 }

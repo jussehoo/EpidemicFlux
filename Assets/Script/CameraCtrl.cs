@@ -17,38 +17,16 @@ public class CameraCtrl : MonoBehaviour
 	private const float INIT_SIZE = MAX_SIZE;
 	private const float MIN_SIZE = 10;
 	private const float STEP_SIZE = .1f;
-
-    void OnPostRender()
-    {
-        /*GL.PushMatrix();
-        lineMaterial.SetPass(0);
-        GL.LoadOrtho();
-        GL.Begin(GL.QUADS);
-        GL.Color(Color.red);
-        GL.Vertex3(0, 0, 0);
-        GL.Vertex3(1, 0, 0);
-        GL.Vertex3(1, 1, 0);
-        GL.Vertex3(0, 1, 0);
-        GL.End();
-        GL.PopMatrix();*/
-    }
-	
+		
     private void Awake()
     {
         quadMesh = CreateQuad();
 		thisCamera = GetComponent<Camera>();
 		thisCamera.orthographicSize = INIT_SIZE;
-
     }
 
 	internal void DrawAll()
 	{
-	   //var mpb = new MaterialPropertyBlock();
-       //var matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(thisCamera.pixelWidth, thisCamera.pixelHeight, 1));
-       //Graphics.DrawMesh(quadMesh, matrix, EF.img.bgColor, 0, thisCamera, 0, mpb);
-
-
-
 		var tileXY = new Vector2(tileX,tileY);
 
 		if (EF.efCtrl != null && EF.efCtrl.population != null/* && EF.efCtrl.isRunning()*/)
@@ -61,7 +39,6 @@ public class CameraCtrl : MonoBehaviour
 			{
 				if (unit == null) continue;
 				
-				// public static void DrawMeshNow(Mesh mesh, Vector3 position, Quaternion rotation, int materialIndex); 
 				Draw(thisCamera, img, unit.color(), unit.worldPosition * tileXY, Quaternion.identity, hb);
 			}
 		}

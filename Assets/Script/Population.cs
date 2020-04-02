@@ -5,17 +5,24 @@ using UnityEngine;
 
 public class Population
 {
-	public Unit [,] pop;
 	private SceneConfig cfg;
-
-	public int [] unitStateNum;
+	
+	internal static int stateNum;
+	internal Unit [,] pop;
+	internal int [] unitStateNum;
+	internal int [] stateNumMax;
+	internal int
+		numUnits,
+		numLinks;
 
 	public Population(SceneConfig c)
 	{
 		cfg = c;
 		Create(cfg);
 
-		unitStateNum = new int[Enum.GetNames(typeof(Unit.State)).Length];
+		stateNum = Enum.GetNames(typeof(Unit.State)).Length;
+		unitStateNum = new int[stateNum];
+		stateNumMax = new int[stateNum];
 	}
 		
 	public bool Contains(Int2 p)
@@ -105,7 +112,7 @@ public class Population
 				{
 					var n = pop[neighbor.x, neighbor.y];
 					if (n == null) continue;
-					if (n.linkCount() <= 1)
+					if (n.NumLinks() <= 1)
 					{
 						dontRemove = true;
 						continue;
@@ -129,6 +136,20 @@ public class Population
 				if (n == null) continue;
 				if (n.state == Unit.State.NEUTRAL) n.SetState(Unit.State.INFECTED);
 			}
+		}
+
+		Summary();
+	}
+
+	private void Summary()
+	{
+		numUnits = 0;
+		numLinks = 0;
+		foreach (var unit in pop)
+		{
+			if (unit == null) continue;
+			numUnits ++;
+			numLinks += unit.NumLinks();
 		}
 	}
 
@@ -192,7 +213,7 @@ public class Population
 
 	public void Step(float time)
 	{
-		for (int i=0; i<unitStateNum.Length; i++) unitStateNum[i] = 0;
+		unitStateNum = new int[stateNum];
 
 		foreach(var unit in pop)
 		{
@@ -202,8 +223,14 @@ public class Population
 
 			unitStateNum[(int)unit.state]++;
 		}
-	}
+		EF.stats.dem.AddLast(unitStateNum);
 
+		// update max
+		for (int i=0; i<stateNum; i++)
+		{
+			if (unitStateNum[i] > stateNumMax[i]) stateNumMax[i] = unitStateNum[i];
+		}
+	}
 	// Update is called once per frame
 	/*void OnDrawGizmos()
     {

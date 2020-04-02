@@ -8,8 +8,9 @@ public class EF : MonoBehaviour
 
 	internal static ImageCollection img;
 
-	public static EFCtrl efCtrl;
-	public static SceneConfig cfg = new SceneConfig();
+	internal static EFCtrl efCtrl;
+	internal static SceneConfig cfg = new SceneConfig();
+	internal static Stats stats = new Stats();
 
 	public const float unitDistance = .5f;
 

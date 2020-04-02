@@ -159,7 +159,7 @@ public class Unit
 		stateTime -= time;
 	}
 
-	internal int linkCount()
+	internal int NumLinks()
 	{
 		int n=0;
 		foreach(var l in links)
