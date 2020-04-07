@@ -8,12 +8,22 @@ using UnityEngine.UI;
 
 public class MenuCtrl : MonoBehaviour
 {
+	public enum Type
+	{
+		CONFIG,
+		PRESET,
+		INFO,
+		DEFAULT
+	}
+
 	public PlayerButton iconTmp, buttonTmp;
 	public TextMeshProUGUI titleTmp, textTmp;
 	public SliderCtrl sliderTmp;
 
-	public GameObject panelTmp, infoTmp, backgroundBlocker;
+	public GameObject panelTmp, infoTmp, mapTypeTmp, backgroundBlocker, sliderContainerTmp, logoTmp;
 	private Transform buttonPanel;
+
+	private Type currentType = Type.DEFAULT;
 
 	void Awake()
 	{
@@ -24,7 +34,10 @@ public class MenuCtrl : MonoBehaviour
 		sliderTmp.gameObject.SetActive(false);
 		infoTmp.gameObject.SetActive(false);
 		backgroundBlocker.SetActive(false);
+		mapTypeTmp.SetActive(false);
 		panelTmp.SetActive(false);
+		sliderContainerTmp.SetActive(false);
+		logoTmp.SetActive(false);
 		//Hide();
 	}
 
@@ -33,55 +46,96 @@ public class MenuCtrl : MonoBehaviour
     {
 
     }
+	
+	internal void ShowInfo()
+	{
+		CreatePanel(Type.INFO);
+
+		buttonPanel.GetComponent<Image>().color = new Color(.1f,.5f,.1f,.9f);
+
+		AddMenuObject(Instantiate(logoTmp));
+
+		CreateTitle("www.gvids.net");
+
+		var info = Instantiate(infoTmp);
+		
+		CreateButton(EF.img.iconScenarios, "Load a scenario preset", () => ShowPresets());
+		CreateButton(EF.img.iconMenu, "Adjust simulation parameters", () => ShowConfig());
+		CreateButton(EF.img.iconInfo, "Show this screen", () => {});
+		CreateButton(EF.img.iconPlay, "Run simulation", () => {CloseMenu(); EF.efCtrl.PlayPauseSim(); });
+		
+		AddMenuObject(info);
+		
+		CreateText(
+			"Infection flow: (a) Units get infected by a neighbor or other sick unit according to certain odds [Neighbor/random infectivity]. (b) For immune units, it stops here [Immunity rate]," +
+			"(c) others get sick. (d, e) Death rate determines how many units recovers.");
+
+		CreateIcon(EF.img.iconClose, "", () => { CloseMenu(); });
+		
+	}
 
 	public void CreateConfigMenu()
 	{    
 		CreateTitle("Scene configuration");
 				
-		createSlider(
-			"Density", .6f, 1f, EF.cfg.density, SliderCtrl.Type.PERCENTAGE,
-			(f) => { if (f != null) EF.cfg.density = f.Value; });
+		//createSlider(
+		//	"Density", .6f, 1f, EF.cfg.density, SliderCtrl.Type.PERCENTAGE,
+		//	(f) => { if (f != null) EF.cfg.density = f.Value; });
+
+		var mt = Instantiate(mapTypeTmp);
+		AddMenuObject(mt);
+
+		var sliderCnt = Instantiate(sliderContainerTmp);
+		AddMenuObject(sliderCnt);
+
+		var sc = sliderCnt.transform;
 
 		createSlider(
 			"Neighbor Infectivity", 0f, 1f, EF.cfg.infectionOnContact, SliderCtrl.Type.PERCENTAGE,
-			(f) => { if (f != null) EF.cfg.infectionOnContact = f.Value; });
+			(f) => { if (f != null) EF.cfg.infectionOnContact = f.Value; }, sc);
 
 		createSlider(
 			"Random Infectivity", 0f, .1f, EF.cfg.randomInfection, SliderCtrl.Type.PERCENTAGE,
-			(f) => { if (f != null) EF.cfg.randomInfection = f.Value; });
+			(f) => { if (f != null) EF.cfg.randomInfection = f.Value; }, sc);
 
 		createSlider(
 			"Infection time", 0.01f, 1f, EF.cfg.infectionTime, SliderCtrl.Type.TIME,
-			(f) => { if (f != null) EF.cfg.infectionTime = f.Value; });
+			(f) => { if (f != null) EF.cfg.infectionTime = f.Value; }, sc);
 
 		createSlider(
 			"Duration of illness", 0.01f, 1f, EF.cfg.sickTime, SliderCtrl.Type.TIME,
-			(f) => { if (f != null) EF.cfg.sickTime = f.Value; });
+			(f) => { if (f != null) EF.cfg.sickTime = f.Value; }, sc);
 
 		createSlider(
 			"Immunity rate", 0f, 1f, EF.cfg.immunityRate, SliderCtrl.Type.PERCENTAGE,
-			(f) => { if (f != null) EF.cfg.immunityRate = f.Value; });
+			(f) => { if (f != null) EF.cfg.immunityRate = f.Value; }, sc);
 
 		createSlider(
 			"Death rate", 0f, .5f, EF.cfg.deathRate, SliderCtrl.Type.PERCENTAGE,
-			(f) => { if (f != null) EF.cfg.deathRate = f.Value; });
+			(f) => { if (f != null) EF.cfg.deathRate = f.Value; }, sc);
 
 			
         CreateTitle("");
-		
+
+		sliderCnt = Instantiate(sliderContainerTmp);
+		AddMenuObject(sliderCnt);
+		sc = sliderCnt.transform;
+
 		createSlider(
 			"Time scale (hours)", 0f, 90 * 24f, EF.cfg.timeScale, SliderCtrl.Type.DEFAULT,
-			(f) => { if (f != null) EF.cfg.timeScale = f.Value; });
+			(f) => { if (f != null) EF.cfg.timeScale = f.Value; }, sc);
 
 			
 		CreateIcon(EF.img.iconClose, "", () => { CloseMenu(); });
 	}
 
-	private void createSlider(string titleText, float min, float max, float current, SliderCtrl.Type type, OnSliderValueChanged _onValueChanged)
+	private void createSlider(string titleText, float min, float max, float current, SliderCtrl.Type type, OnSliderValueChanged _onValueChanged, Transform container)
 	{
 		var slider = Instantiate(sliderTmp);
 		slider.Setup(titleText, min, max, current, type, _onValueChanged);
-		AddMenuObject(slider.gameObject);
+		
+		slider.gameObject.SetActive(true);
+		slider.transform.SetParent(container);
 	}
 
 	public void BackgroundClicked()
@@ -97,43 +151,27 @@ public class MenuCtrl : MonoBehaviour
 			buttonPanel = null;
 			
 			backgroundBlocker.SetActive(false);
+
+			if (currentType == Type.CONFIG)
+			{
+				if (EF.efCtrl.simState == EFCtrl.SimState.INITIALIZED ||EF.efCtrl.simState == EFCtrl.SimState.FINISHED)
+				{
+					EF.efCtrl.Generate();
+				}
+			}
 		}
 	}
 
-	internal void ShowInfo()
-	{
-		CreatePanel();
-
-		buttonPanel.GetComponent<Image>().color = new Color(.1f,.5f,.1f,.9f);
-
-		CreateTitle("GVIDS info");
-
-		var info = Instantiate(infoTmp);
-		
-		CreateButton(EF.img.iconScenarios, "Load a scenario preset", () => ShowPresets());
-		CreateButton(EF.img.iconMenu, "Adjust simulation configurations", () => ShowConfig());
-		CreateButton(EF.img.iconInfo, "Show this screen", () => {});
-		CreateButton(EF.img.iconPlay, "Run simulation", () => {CloseMenu(); EF.efCtrl.PlayPauseSim(); });
-		
-		AddMenuObject(info);
-		
-		CreateText(
-			"Infection flow: (a) Units get infected by a neighbor or other sick unit according to certain odds [Neighbor/random infectivity]. (b) For immune units, it stops here [Immunity rate]," +
-			"(c) others get sick. (d, e) Death rate determines how many units recovers.");
-
-		CreateIcon(EF.img.iconClose, "", () => { CloseMenu(); });
-		
-	}
 	
 	internal void ShowConfig()
 	{
-		CreatePanel();
+		CreatePanel(Type.CONFIG);
 		CreateConfigMenu();
 	}
 
 	internal void ShowPresets()
 	{
-		CreatePanel();
+		CreatePanel(Type.PRESET);
 		
 		CreateTitle("Scene Presets");
 		
@@ -146,7 +184,6 @@ public class MenuCtrl : MonoBehaviour
 
 		CreateButton(EF.img.iconAviators, "Aviators", () => {
 			EF.cfg = new SceneConfig();
-			EF.cfg.density = .65f;
 			EF.cfg.randomInfection = .08f;
 			EF.cfg.infectionOnContact = .65f;
 			EF.efCtrl.Generate();
@@ -156,7 +193,7 @@ public class MenuCtrl : MonoBehaviour
 
 		CreateButton(EF.img.iconCity, "Overcrowded", () => {
 			EF.cfg = new SceneConfig();
-			EF.cfg.density = .95f;
+			EF.cfg.mapType = SceneConfig.Map.DENSE_FULL;
 			EF.cfg.randomInfection = .001f;
 			EF.cfg.infectionOnContact = .65f;
 			EF.cfg.immunityRate = .20f;
@@ -168,10 +205,12 @@ public class MenuCtrl : MonoBehaviour
 		CreateIcon(EF.img.iconClose, "", () => { CloseMenu(); });
 	}
 
-	private void CreatePanel()
+	private void CreatePanel(Type type)
 	{
 		CloseMenu();
 		
+		currentType = type;
+
 		EF.efCtrl.PauseSim();
 
 		backgroundBlocker.SetActive(true);

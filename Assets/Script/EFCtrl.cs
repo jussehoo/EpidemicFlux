@@ -10,8 +10,8 @@ public class EFCtrl : MonoBehaviour
 	private PlayerCtrl playerCtrl;
 
 	public const float MIN_PACE = .2f;
-	public const float MAX_PACE = .05f;
-	public const float DEFAULT_PACE = MIN_PACE;
+	public const float MAX_PACE = .04f;
+	public const float DEFAULT_PACE = MAX_PACE;
 	internal float pace = DEFAULT_PACE;
 
 	private float stepTime, simTime = 0f;
@@ -86,7 +86,11 @@ public class EFCtrl : MonoBehaviour
 				simTime += SIM_STEP;
 				population.Step(SIM_STEP);
 				stepped = true;
-				if (EndCondition()) simState = SimState.FINISHED;
+				if (EndCondition())
+				{
+					simState = SimState.FINISHED;
+					playerCtrl.RefreshButtons();
+				}
 				playerCtrl.RefreshRunStats();
 				
 				if (skipDrawingOnSteppingFrame) camCtrl.thisCamera.enabled = false;
@@ -141,19 +145,29 @@ public class EFCtrl : MonoBehaviour
 		}
 		else if (simState == SimState.INITIALIZED)
 		{
-			pace = DEFAULT_PACE;
-			stepTime = pace;
-			simTime = 0f;
-			simState = SimState.RUNNING;
-			playerCtrl.CreateRunStats();
-			EF.stats.dem.RemoveAll();
-			playerCtrl.graphTex.SetActive(true);
+			RunSim();
+		}
+		else if (simState == SimState.FINISHED)
+		{
+			Generate();
+			RunSim();
 		}
 		else if (simState == SimState.PAUSE)
 		{
 			simState = SimState.RUNNING;
 		}
 		playerCtrl.RefreshButtons();
+	}
+
+	void RunSim()
+	{
+		pace = DEFAULT_PACE;
+		stepTime = pace;
+		simTime = 0f;
+		simState = SimState.RUNNING;
+		playerCtrl.CreateRunStats();
+		EF.stats.dem.RemoveAll();
+		playerCtrl.graphTex.SetActive(true);
 	}
 
 	internal void SpeedUpOrDown()

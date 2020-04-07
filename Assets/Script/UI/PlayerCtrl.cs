@@ -31,7 +31,7 @@ public class PlayerCtrl : MonoBehaviour
 	{
 		buttonTmp.gameObject.SetActive(false);
 		statTmp.gameObject.SetActive(false);
-		graphTex.SetActive(false);
+		//graphTex.SetActive(false);
 
 		efCtrl = FindObjectOfType<EFCtrl>();
 		camCtrl = FindObjectOfType<CameraCtrl>();

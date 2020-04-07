@@ -59,15 +59,21 @@ public class Population
 
 		// create units
 
+		if (cfg.mapType == SceneConfig.Map.DENSE_AREAL || cfg.mapType == SceneConfig.Map.SPARSE_AREAL)
+		{
+			FillArea (cfg.width / 2, cfg.height / 2, (cfg.width / 4) + 4);
+			FillArea (1 * cfg.width / 7, cfg.height / 2, cfg.width / 9);
+			FillArea (6 * cfg.width / 7, cfg.height / 2, cfg.width / 9);
 		
-		FillArea (cfg.width / 2, cfg.height / 2, cfg.width / 4);
-		FillArea (cfg.width / 6, cfg.height / 2, cfg.width / 7);
-		FillArea (5 * cfg.width / 6, cfg.height / 2, cfg.width / 7);
-		
-		FillArea (8 * cfg.width / 9, cfg.height / 6, cfg.width / 9);
-		FillArea (8 * cfg.width / 9, 5*cfg.height / 6, cfg.width / 9);
-		FillArea (1 * cfg.width / 9, 5*cfg.height / 6, cfg.width / 9);
-		FillArea (1 * cfg.width / 9, cfg.height / 6, cfg.width / 9);
+			FillArea (6 * cfg.width / 7, cfg.height / 5,	(cfg.width / 9) + 2);
+			FillArea (6 * cfg.width / 7, 4*cfg.height / 5,	(cfg.width / 9) + 2);
+			FillArea (1 * cfg.width / 7, 4*cfg.height / 5,	(cfg.width / 9) + 2);
+			FillArea (1 * cfg.width / 7, cfg.height / 5,	(cfg.width / 9) + 2);
+		}
+		else
+		{
+			FillArea (cfg.width / 2, cfg.height / 2, cfg.width * 2);
+		}
 
 
 		// create links to neighbors
@@ -93,36 +99,49 @@ public class Population
 				}
 			}
 		}
-
-		// randomly remove units
-
-		var firstUnit = pop[cfg.width/2,cfg.height/2];
 		
+		var firstUnit = pop[cfg.width/2,cfg.height/2];
+
+		if (cfg.mapType == SceneConfig.Map.SPARSE_FULL || cfg.mapType == SceneConfig.Map.SPARSE_AREAL)
+		{
+			for (int x=0; x<cfg.width; x++)
+			{
+				for (int y=0; y<cfg.height; y++)
+				{
+					if ((2*(x%2) + y) % 3 != 0) continue;
+
+					bool dontRemove = false;
+				
+					// don't remove if there's a neighbor with only one link
+
+					foreach (var neighbor in Neighbors(new Int2(x,y)))
+					{
+						var n = pop[neighbor.x, neighbor.y];
+						if (n == null) continue;
+						if (n.NumLinks() <= 1)
+						{
+							dontRemove = true;
+							continue;
+						}
+					}
+					if (dontRemove) continue;
+
+					var removable = pop[x,y];
+					if (removable == firstUnit) continue;
+					RemoveUnit(removable);
+				}
+			}
+		}
+
+		// remove units with only one neighbor
+
 		for (int x=0; x<cfg.width; x++)
 		{
 			for (int y=0; y<cfg.height; y++)
 			{
-				if (UnityEngine.Random.Range(0f,1f) < cfg.density) continue;
-
-				bool dontRemove = false;
-				
-				// don't remove if there's a neighbor with only one link
-
-				foreach (var neighbor in Neighbors(new Int2(x,y)))
-				{
-					var n = pop[neighbor.x, neighbor.y];
-					if (n == null) continue;
-					if (n.NumLinks() <= 1)
-					{
-						dontRemove = true;
-						continue;
-					}
-				}
-				if (dontRemove) continue;
-
-				var removable = pop[x,y];
-				if (removable == firstUnit) continue;
-				RemoveUnit(removable);
+				var unit = pop[x, y];
+				if (unit == null) continue;
+				if (unit.NumLinks() == 1 || unit.NumLinks() == 0) RemoveUnit(unit);
 			}
 		}
 
@@ -137,7 +156,7 @@ public class Population
 				if (n.state == Unit.State.NEUTRAL) n.SetState(Unit.State.INFECTED);
 			}
 		}
-
+		
 		Summary();
 	}
 
@@ -162,33 +181,69 @@ public class Population
 		}
 		return null;
 	}
-
-	private void FillArea(int cx, int cy, int? radius)
+	
+	private void FillArea(int x, int y, int radius)
 	{
-		for (int x=0; x<cfg.width; x++)
+		FillArea(new Int2(x,y), radius);
+	}
+	private void FillArea(Int2 center, int radius)
+	{	
+		var list = new MList<Int2>();
+		
+		AddNeighbors(list, center, 0, radius);
+		
+		foreach (Int2 p in list)
 		{
-			for (int y=0; y<cfg.height; y++)
+			if (UnitAt(p) == null)
 			{
-				if (radius != null)
-				{
-					if (Int2.hexDistance(x, y, cx,cy) > radius) continue;
-				}
-
 				var unit = new Unit(
-					x,
-					y,
+					p.x,
+					p.y,
 					new Vector3
 					(
-						x * EF.unitDistance,
-						y * EF.unitDistance + (x%2==1?.5f*EF.unitDistance:0f),
+						p.x * EF.unitDistance,
+						p.y * EF.unitDistance + (p.x%2==1?.5f*EF.unitDistance:0f),
 						0
 					));
 				unit.InitUnit();
-				unit.pos = new Int2(x,y);
-				pop[x,y] = unit;
-		}}
+				unit.pos = new Int2(p);
+				pop[p.x,p.y] = unit;
+			}
+		}
 	}
+	
+	public void AddNeighbors(MList<Int2> list, Int2 p, int min, int max)
+	{
+		for (int i=min; i<max; i++) AddNeighbors(list, p, i);
+	}
+	public void AddNeighbors(MList<Int2> list, Int2 p, int range)
+	{
+		if (range == 0)
+		{
+			list.AddLast(new Int2(p));
+			return;
+		}
 
+		// Find neighbors in certain range.
+		// Go to 'range' distance and circle around 'p' in six steps.
+
+		Int2 it = new Int2(p); // iterator
+		it.y -= range;
+
+		for (int i=0; i<6; i++)
+		{
+			int dir = (2 + i) % 6;
+			for (int n=0; n<range; n++)
+			{
+				var hu = Int2.hexUnit(it.evenX(), dir);
+				it.add(hu.Value);
+				if (Contains(it))
+				{
+					list.AddLast(new Int2(it));
+				}
+			}
+		}
+	}
 	internal int width()
 	{
 		return cfg.width;
@@ -231,26 +286,4 @@ public class Population
 			if (unitStateNum[i] > stateNumMax[i]) stateNumMax[i] = unitStateNum[i];
 		}
 	}
-	// Update is called once per frame
-	/*void OnDrawGizmos()
-    {
-		for (int x=0; x<width; x++)
-		{
-			for (int y=0; y<height; y++)
-			{
-				if (pop[x,y] != null)
-				{
-					var a = pop[x,y];
-					foreach(var b in a.links)
-					{
-						if (b != null && b.pos.x >= a.pos.x && b.pos.y >= a.pos.y)
-						{
-							Gizmos.color = Color.blue;
-							Gizmos.DrawLine (a.transform.position, b.transform.position);		
-						}
-					}
-				}
-			}
-		}
-    }*/
 }
